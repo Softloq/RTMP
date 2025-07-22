@@ -1,10 +1,20 @@
 use std::net::{TcpListener, TcpStream};
+use std::{io};
 
-fn main() -> std::io::Result<()> {
-	let listener = TcpListener::bind("127.0.0.1:1935")?;
+pub struct Server {
+	listener: TcpListener
+}
 
-	for stream in listener.incoming() {
-		println!("Works!");
+impl Server {
+	pub fn new(host: &str, port: u16) -> io::Result<Self> {
+		let listener: TcpListener = TcpListener::bind(format!("{}:{}", host, port))?;
+		Ok(Server { listener })
 	}
-	Ok(())
+
+	pub fn listen(&self) -> io::Result<()> {
+		for stream in self.listener.incoming() {
+			println!("Works!");
+		}
+		Ok(())
+	}
 }
