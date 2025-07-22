@@ -40,7 +40,14 @@ impl Server {
 				Ok(mut client) => {
 					println!("[Client] {} connected", client.ip_addr());
 
-					client_handshake(&mut client);
+					match client_handshake(&mut client) {
+						Ok(()) => {
+
+						}
+						Err(e) => {
+							eprintln!("[RTMP Handshake Error] {}", e);
+						}
+					}
 				}
 				Err(e) => {
 					eprintln!("Error creating client: {}", e);
