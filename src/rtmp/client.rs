@@ -1,17 +1,14 @@
 use rtmp::chunk::{C0};
 use std::{io::{self, Read}, net::{SocketAddr, TcpStream}};
 
-enum HandshakeError {
-    InvalidInput(String),
-    ResourceNotFound,
-    PermissionDenied,
-}
+use crate::rtmp;
 
 pub struct Client {
 	stream: TcpStream,
 
 	ip: String,
-	port: u16
+	port: u16,
+	epoch: u32
 }
 
 impl Client {
@@ -19,7 +16,7 @@ impl Client {
 		let peer_addr: SocketAddr = stream.peer_addr()?;
 		let ip: String = peer_addr.ip().to_string();
 		let port: u16 = peer_addr.port();
-		Ok(Client {stream, ip, port})
+		Ok(Client {stream, ip, port, epoch: 0x00})
 	}
 
 	pub fn ip(&self) -> &str {
@@ -32,6 +29,10 @@ impl Client {
 
 	pub fn ip_addr(&self) -> String {
 		return format!("{}:{}", &self.ip(), &self.port()).to_string();
+	}
+
+	pub fn set_epoch(&mut self, epoch: u32) {
+		self.epoch = epoch
 	}
 
 	pub fn read(&mut self, buffer: &mut [u8]) {

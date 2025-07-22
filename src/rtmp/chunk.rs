@@ -31,39 +31,28 @@ struct Chunk {
 	data: Data
 }
 
-#[derive(Copy, Clone)]
-struct C0Info {
-	pub version: u8
-}
-union UnsafeC0 {
-	pub buff: [u8; C0_SIZE],
-	pub info: C0Info
-}
-pub struct C0 { data: UnsafeC0 }
+pub struct C0 { buff: [u8; C0_SIZE] }
 impl C0 {
-	pub fn new(buffer: [u8; C0_SIZE]) -> C0 { C0 { data: UnsafeC0 { buff: buffer } } }
-	pub fn version(&self) -> u8 { unsafe { self.data.info.version } }
+	pub fn new(buffer: [u8; C0_SIZE]) -> C0 { C0 { buff: buffer } }
+	pub fn version(&self) -> u8 { self.buff[0] }
 }
 
 pub struct S0 {
 
 }
-#[derive(Copy, Clone)]
-struct C1Info {
-	pub time: u32,
-	pub zero: u32,
-	pub random: [u8; C1_RAND_SIZE]
-}
-union UnsafeC1 {
-	pub buff: [u8; C1_SIZE],
-	pub info: C1Info
-}
-pub struct C1 { data: UnsafeC1 }
+
+pub struct C1 { buff: [u8; C1_SIZE] }
 impl C1 {
-	pub fn new(buffer: [u8; C1_SIZE]) -> C1 { C1 { data: UnsafeC1 { buff: buffer } } }
-	pub fn time(&self) -> u32 { unsafe { self.data.info.time } }
-	pub fn zero(&self) -> u32 { unsafe { self.data.info.zero } }
-	pub fn random(&self) -> [u8; C1_RAND_SIZE] { unsafe { self.data.info.random } }
+	pub fn new(buffer: [u8; C1_SIZE]) -> C1 { C1 { buff: buffer } }
+	pub fn time(&self) -> u32 {
+		u32::from_be_bytes(self.buff[0..4].try_into().unwrap())
+	}
+	pub fn zero(&self) -> u32 {
+		u32::from_be_bytes(self.buff[4..8].try_into().unwrap())
+	}
+	pub fn random(&self) -> [u8; C1_RAND_SIZE] {
+		self.buff[8..C1_SIZE].try_into().unwrap()
+	}
 }
 
 pub struct S1 {
