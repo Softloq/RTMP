@@ -1,4 +1,11 @@
-use std::{io, net::{SocketAddr, TcpStream}};
+use rtmp::chunk::{C0};
+use std::{io::{self, Read}, net::{SocketAddr, TcpStream}};
+
+enum HandshakeError {
+    InvalidInput(String),
+    ResourceNotFound,
+    PermissionDenied,
+}
 
 pub struct Client {
 	stream: TcpStream,
@@ -27,7 +34,7 @@ impl Client {
 		return format!("{}:{}", &self.ip(), &self.port()).to_string();
 	}
 
-	pub fn handshake(&self) {
-		println!("[Client] {} beginning the RTMP Handshake", self.ip_addr());
+	pub fn read(&mut self, buffer: &mut [u8]) {
+		self.stream.read_exact(buffer);
 	}
 }

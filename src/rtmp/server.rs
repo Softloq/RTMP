@@ -1,4 +1,5 @@
 use rtmp::client::{Client};
+use rtmp::handshake::{client_handshake};
 
 use std::net::{TcpListener, TcpStream};
 use std::collections::HashMap;
@@ -36,9 +37,10 @@ impl Server {
 		thread::spawn(|| {
 			let client: Result<Client, io::Error> = Client::new(stream);
 			match client {
-				Ok(client) => {
+				Ok(mut client) => {
 					println!("[Client] {} connected", client.ip_addr());
-					client.handshake();
+
+					client_handshake(&mut client);
 				}
 				Err(e) => {
 					eprintln!("Error creating client: {}", e);
