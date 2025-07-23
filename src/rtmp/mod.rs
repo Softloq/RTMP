@@ -1,6 +1,6 @@
 pub mod info;
 pub mod server;
-pub mod client;
+pub mod stream;
 pub mod chunk;
 
 pub mod handshake;

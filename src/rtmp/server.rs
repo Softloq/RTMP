@@ -1,5 +1,5 @@
-use rtmp::client::{Client};
-use rtmp::handshake::{client_handshake};
+use rtmp::stream::{Stream};
+use rtmp::handshake::{handshake};
 
 use std::net::{TcpListener, TcpStream};
 use std::collections::HashMap;
@@ -9,13 +9,13 @@ use crate::rtmp;
 
 pub struct Server {
 	listener: TcpListener,
-	clients: HashMap<String, Client>
+	clients: HashMap<String, Stream>
 }
 
 impl Server {
 	pub fn new(host: &str, port: u16) -> io::Result<Self> {
 		let listener: TcpListener = TcpListener::bind(format!("{}:{}", host, port))?;
-		let clients: HashMap<String, Client> = HashMap::new();
+		let clients: HashMap<String, Stream> = HashMap::new();
 		Ok(Server { listener, clients })
 	}
 
@@ -37,12 +37,12 @@ impl Server {
 
 	fn new_conn(&self, stream: TcpStream) {
 		thread::spawn(|| {
-			let client: Result<Client, io::Error> = Client::new(stream);
+			let client: Result<Stream, io::Error> = Stream::new(stream);
 			match client {
 				Ok(mut client) => {
 					println!("[Client] {} connected", client.ip_addr());
 
-					match client_handshake(&mut client) {
+					match handshake(&mut client) {
 						Ok(()) => {
 
 						}

@@ -1,9 +1,6 @@
-use rtmp::chunk::{C0};
-use std::{io::{self, Read}, net::{SocketAddr, TcpStream}};
+use std::{io::{self, Read, Write}, net::{SocketAddr, TcpStream}};
 
-use crate::rtmp;
-
-pub struct Client {
+pub struct Stream {
 	stream: TcpStream,
 
 	ip: String,
@@ -11,12 +8,12 @@ pub struct Client {
 	epoch: u32
 }
 
-impl Client {
+impl Stream {
 	pub fn new(stream: TcpStream) -> io::Result<Self> {
 		let peer_addr: SocketAddr = stream.peer_addr()?;
 		let ip: String = peer_addr.ip().to_string();
 		let port: u16 = peer_addr.port();
-		Ok(Client {stream, ip, port, epoch: 0x00})
+		Ok(Stream {stream, ip, port, epoch: 0x00})
 	}
 
 	pub fn ip(&self) -> &str {
@@ -35,7 +32,11 @@ impl Client {
 		self.epoch = epoch
 	}
 
-	pub fn read(&mut self, buffer: &mut [u8]) {
+	pub fn read_from_client(&mut self, buffer: &mut [u8]) {
 		self.stream.read_exact(buffer);
+	}
+
+	pub fn send_to_client(&mut self, buffer: &[u8]) {
+		self.stream.write_all(buffer);
 	}
 }
