@@ -40,7 +40,7 @@ impl Server {
 			let client: Result<Stream, io::Error> = Stream::new(stream);
 			match client {
 				Ok(mut client) => {
-					println!("[Client {}] Connected.", client.ip_addr());
+					println!("[RTMP Server] Client '{}' | Connected.", client.ip_addr());
 
 					match handshake(&mut client) {
 						Ok(()) => {
