@@ -1,6 +1,5 @@
 use rtmp::connection::{RtmpConnection};
-use rtmp::handshake_policy::policy::{rtmp_handshake_policy};
-use rtmp::chunk_stream::stream::{RtmpChunkStream};
+use rtmp::protocol::{rtmp_protocol};
 use crate::rtmp;
 
 use std::net::{TcpListener, TcpStream};
@@ -38,20 +37,10 @@ impl RtmpServer {
 				return
 			}
 
-			let mut rtmp_conn = rtmp_conn_attempt.unwrap();
-			println!("[RTMP Server] Client '{}' | Connected. Starting RTMP Chunk Stream.", rtmp_conn.client_ip_addr());
+			let rtmp_conn = rtmp_conn_attempt.unwrap();
+			println!("[RTMP Server] Client '{}' | Connected. Starting RTMP Protocol on connection.", rtmp_conn.client_ip_addr());
 
-			let handshake_attempt = rtmp_handshake_policy(&mut rtmp_conn);
-			if let Err(e) = handshake_attempt {
-				eprintln!("[RTMP Handshake Error] {}", e); 
-				return
-			}
-			
-			loop {
-				let mut chunk_stream = RtmpChunkStream::new(rtmp_conn);
-				chunk_stream.chunking();
-				break
-			}
+			rtmp_protocol(rtmp_conn);
 		});
 	}
 }
