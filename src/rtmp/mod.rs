@@ -1,6 +1,6 @@
 pub mod info;
 pub mod server;
-pub mod stream;
-pub mod chunk;
+pub mod connection;
 
-pub mod handshake;
+pub mod handshake_policy;
+pub mod chunk_stream;

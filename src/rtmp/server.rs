@@ -1,59 +1,56 @@
-use rtmp::stream::{Stream};
-use rtmp::handshake::{handshake};
-
-use std::net::{TcpListener, TcpStream};
-use std::collections::HashMap;
-use std::{io, thread};
-
+use rtmp::connection::{RtmpConnection};
+use rtmp::handshake_policy::policy::{rtmp_handshake_policy};
+use rtmp::chunk_stream::stream::{RtmpChunkStream};
 use crate::rtmp;
 
-pub struct Server {
-	listener: TcpListener,
-	clients: HashMap<String, Stream>
-}
+use std::net::{TcpListener, TcpStream};
+use std::{io, thread};
 
-impl Server {
+pub struct RtmpServer { listener: TcpListener }
+impl RtmpServer {
 	pub fn new(host: &str, port: u16) -> io::Result<Self> {
 		let listener: TcpListener = TcpListener::bind(format!("{}:{}", host, port))?;
-		let clients: HashMap<String, Stream> = HashMap::new();
-		Ok(Server { listener, clients })
+		Ok(RtmpServer { listener })
 	}
 
 	pub fn listen(&mut self) -> io::Result<()> {
-		for stream in self.listener.incoming() {
-		    match stream {
-                Ok(stream) => { self.new_conn(stream); }
-                Err(e) => {
-                    eprintln!("Error accepting connection: {}", e);
-                    if e.kind() == io::ErrorKind::AddrInUse || e.kind() == io::ErrorKind::PermissionDenied {
-                        eprintln!("Fatal listener error, shutting down.");
-                        return Err(e);
-                    }
-                }
-            }
+		for tcp_stream_attempt in self.listener.incoming() {
+			if let Err(e) = tcp_stream_attempt {
+ 				eprintln!("Error accepting connection: {}", e);
+				if e.kind() == io::ErrorKind::AddrInUse || e.kind() == io::ErrorKind::PermissionDenied {
+					eprintln!("Fatal listener error, shutting down.");
+					return Err(e);
+				}
+				continue
+			}
+			
+			let tcp_stream = tcp_stream_attempt.unwrap();
+            self.handle_connection(tcp_stream);
 		}
 		Ok(())
 	}
 
-	fn new_conn(&self, stream: TcpStream) {
-		thread::spawn(|| {
-			let client: Result<Stream, io::Error> = Stream::new(stream);
-			match client {
-				Ok(mut client) => {
-					println!("[RTMP Server] Client '{}' | Connected.", client.ip_addr());
+	fn handle_connection(&self, stream: TcpStream) {
+		thread::spawn(move || {
+			let rtmp_conn_attempt = RtmpConnection::new(stream);
+			if let Err(e) = rtmp_conn_attempt {
+				eprintln!("[RTMP Server] Error creating client: {}", e);
+				return
+			}
 
-					match handshake(&mut client) {
-						Ok(()) => {
+			let mut rtmp_conn = rtmp_conn_attempt.unwrap();
+			println!("[RTMP Server] Client '{}' | Connected. Starting RTMP Chunk Stream.", rtmp_conn.client_ip_addr());
 
-						}
-						Err(e) => {
-							eprintln!("[RTMP Handshake Error] {}", e);
-						}
-					}
-				}
-				Err(e) => {
-					eprintln!("Error creating client: {}", e);
-				}
+			let handshake_attempt = rtmp_handshake_policy(&mut rtmp_conn);
+			if let Err(e) = handshake_attempt {
+				eprintln!("[RTMP Handshake Error] {}", e); 
+				return
+			}
+			
+			loop {
+				let mut chunk_stream = RtmpChunkStream::new(rtmp_conn);
+				chunk_stream.chunking();
+				break
 			}
 		});
 	}

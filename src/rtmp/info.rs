@@ -1,1 +1,1 @@
-pub const SPEC_VERSION: u8 = 3;
+pub const RTMP_VERSION: u8 = 3;
