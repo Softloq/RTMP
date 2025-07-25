@@ -5,3 +5,4 @@ pub mod connection;
 pub mod protocol;
 pub mod handshake;
 pub mod chunk;
+pub mod message_handler;

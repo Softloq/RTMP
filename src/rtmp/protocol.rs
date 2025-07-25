@@ -1,11 +1,10 @@
 use rtmp::connection::{RtmpConnection};
 use rtmp::handshake::{rtmp_handshake_policy};
 use rtmp::chunk::*;
+use rtmp::message_handler;
 use crate::rtmp;
 
-use bitvec::prelude::*;
-
-pub fn rtmp_protocol(mut rtmp_conn: RtmpConnection) {
+pub fn rtmp_chunk_stream_protocol(mut rtmp_conn: RtmpConnection) {
 	// Handshake Policy
 	let handshake_attempt = rtmp_handshake_policy(&mut rtmp_conn);
 	if let Err(e) = handshake_attempt {
@@ -27,14 +26,35 @@ pub fn rtmp_protocol(mut rtmp_conn: RtmpConnection) {
 
 		let chunk_header: ChunkHeader = ChunkHeader::new(chunk_basic_header, chunk_message_header, extended_timestamp);
 		let chunk_data: ChunkData = read_chunk_data(&mut rtmp_conn, chunk_header.message_header());
+		
+		let chunk: Chunk = Chunk::new(chunk_header, chunk_data);
 
-		match chunk_header.message_header().message_type_id() {
-			ChunkMessageType::SetChunkSize => {
-				let chunk_size = chunk_data.into_bytes().view_bits::<Msb0>()[0..32].load_be::<u32>();
-				println!("New Chunk Size: {}", chunk_size);
-				rtmp_conn.set_chunk_size(chunk_size);
-			}
-			_ => {}
+		// process the chunk based on the message type
+		match chunk.chunk_header().message_header().message_type_id() {
+			ChunkMessageType::SetChunkSize => { message_handler::set_chunk_size(chunk, &mut rtmp_conn); },
+			ChunkMessageType::AbortMessage => { message_handler::abort_message(chunk); },
+			ChunkMessageType::Acknowledgement => { message_handler::acknowledgement(chunk); },
+			ChunkMessageType::WindowAcknowledgementSize => { message_handler::window_acknowledgement_size(chunk); },
+			ChunkMessageType::SetPeerBandwidth => { message_handler::set_peer_bandwidth(chunk); },
+
+			ChunkMessageType::UserControlMessage => { message_handler::user_control_message(chunk); },
+
+			ChunkMessageType::AudioMessage => { message_handler::audio_message(chunk); },
+			ChunkMessageType::VideoMessage => { message_handler::video_message(chunk); },
+
+			ChunkMessageType::AMF3DataMessage => { message_handler::amf3_data_message(chunk); },
+			ChunkMessageType::AMF3SharedObjectMessage => { message_handler::amf3_shared_object_message(chunk); },
+			ChunkMessageType::AMF3CommandMessage => { message_handler::amf3_command_message(chunk); },
+
+			ChunkMessageType::AMF0DataMessage => { message_handler::amf0_data_message(chunk); },
+			ChunkMessageType::AMF0SharedObjectMessage => { message_handler::amf0_shared_object_message(chunk); },
+			ChunkMessageType::AMF0CommandMessage => { message_handler::amf0_command_message(chunk); },
+
+			ChunkMessageType::AggregateMessage => { message_handler::aggregate_message(chunk); },
+
+			ChunkMessageType::ReservedMessage => { message_handler::reserved_message(chunk); },
+
+			ChunkMessageType::UndefinedType => { }
 		}
 	}
 }

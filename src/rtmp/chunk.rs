@@ -2,8 +2,8 @@ use bitvec::prelude::*;
 
 // Size Constraints ------------------------------------------------//
 
-const _: () = assert!(size_of::<ChunkBasicHeaderOneByte>()    == 1);
-const _: () = assert!(size_of::<ChunkBasicHeaderTwoBytes>()   == 2);
+const _: () = assert!(size_of::<ChunkBasicHeaderOneByte>() == 1);
+const _: () = assert!(size_of::<ChunkBasicHeaderTwoBytes>() == 2);
 const _: () = assert!(size_of::<ChunkBasicHeaderThreeBytes>() == 3);
 
 const _: () = assert!(size_of::<ChunkMessageHeaderType0>() == 11);
@@ -240,4 +240,14 @@ pub struct ChunkData { data: Vec<u8> }
 impl ChunkData {
 	pub fn from_bytes(data: Vec<u8>) -> ChunkData { ChunkData { data } }
 	pub fn into_bytes(&self) -> &Vec<u8> { &self.data }
+}
+
+pub struct Chunk {
+	header: ChunkHeader,
+	data: ChunkData
+}
+impl Chunk {
+	pub fn new(chunk_header: ChunkHeader, chunk_data: ChunkData) -> Chunk { Chunk { header: chunk_header, data: chunk_data } }
+	pub fn chunk_header(&self) -> &ChunkHeader { &self.header }
+	pub fn chunk_data(&self) -> &ChunkData { &self.data }
 }

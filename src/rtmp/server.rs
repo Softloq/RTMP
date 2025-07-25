@@ -1,5 +1,5 @@
 use rtmp::connection::{RtmpConnection};
-use rtmp::protocol::{rtmp_protocol};
+use rtmp::protocol::{rtmp_chunk_stream_protocol};
 use crate::rtmp;
 
 use std::net::{TcpListener, TcpStream};
@@ -40,7 +40,7 @@ impl RtmpServer {
 			let rtmp_conn = rtmp_conn_attempt.unwrap();
 			println!("[RTMP Server] Client '{}' | Connected. Starting RTMP Protocol on connection.", rtmp_conn.client_ip_addr());
 
-			rtmp_protocol(rtmp_conn);
+			rtmp_chunk_stream_protocol(rtmp_conn);
 		});
 	}
 }
